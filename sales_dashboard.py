@@ -150,7 +150,7 @@ def cal_average_margin(df):
 min_date = filled_df['Date Added'].min()
 max_date = filled_df['Date Added'].max()
 
-st.sidebar.write("Filter Here")
+st.sidebar.write("Filter")
 # Create a form in the sidebar
 with st.sidebar.form(key='filter_form'):
 
