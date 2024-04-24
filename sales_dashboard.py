@@ -57,7 +57,7 @@ def process_data_sheets(folder_path):
     return compiled_data
 
 # Usage
-folder_path = r'C:\Users\Danial Azrai\Desktop\.GOH Office\Sales Dashboard'  # Replace with the path to your folder containing Excel files
+folder_path = 'Sales Dashboard'  # Replace with the path to your folder containing Excel files
 compiled_df = process_data_sheets(folder_path)
 compiled_df.reset_index(drop=True, inplace=True)
 #compiled_df
