@@ -1,0 +1,8 @@
+pandas
+plotly
+openpyxl
+lxml
+numpy
+natsort
+xlsxwriter
+
