@@ -150,28 +150,29 @@ def cal_average_margin(df):
 min_date = filled_df['Date Added'].min()
 max_date = filled_df['Date Added'].max()
 
+mode = st.sidebar.selectbox('Select Mode:', ['UptoDate', 'Range', 'Compare'])
+st.sidebar.write("#")
 st.sidebar.write("Filter")
 # Create a form in the sidebar
 with st.sidebar.form(key='filter_form'):
 
     # Select box for choosing the mode
-    mode = st.selectbox('Select Mode:', ['UptoDate', 'Range', 'Compare'])
+    if mode == 'Range':
+        start_date = st.date_input('Start date', value=min_date, min_value=min_date, max_value=max_date, key='start_date')
+        end_date = st.date_input('End date', value=max_date, min_value=min_date, max_value=max_date, key='end_date')
+        st.write('_____________')
 
-    st.write('_____________')
-    st.write('Range')
-    start_date = st.date_input('Start date', value=min_date, min_value=min_date, max_value=max_date, key='start_date')
-    end_date = st.date_input('End date', value=max_date, min_value=min_date, max_value=max_date, key='end_date')
+    if mode == 'Compare':
+        st.header('Period 1')
+        start_date_1 = st.date_input('Start date', value=min_date, min_value=min_date, max_value=max_date, key='start_date_1')
+        end_date_1 = st.date_input('End date', value=max_date, min_value=min_date, max_value=max_date, key='end_date_1')
 
-    st.write('_____________')
-    st.write('Compare')
-    start_date_1 = st.date_input('Start date (Period 1)', value=min_date, min_value=min_date, max_value=max_date, key='start_date_1')
-    end_date_1 = st.date_input('End date (Period 1)', value=max_date, min_value=min_date, max_value=max_date, key='end_date_1')
+        st.write("#")
+        st.header('Period 2')
+        start_date_2 = st.date_input('Start date', value=min_date, min_value=min_date, max_value=max_date, key='start_date_2')
+        end_date_2 = st.date_input('End date', value=max_date, min_value=min_date, max_value=max_date, key='end_date_2')
+        st.write('_____________')
 
-    st.write("#")
-    start_date_2 = st.date_input('Start date (Period 2)', value=min_date, min_value=min_date, max_value=max_date, key='start_date_2')
-    end_date_2 = st.date_input('End date (Period 2)', value=max_date, min_value=min_date, max_value=max_date, key='end_date_2')
-
-    st.write('_____________')
     # Get a list of unique values for each category
     marketplaces = filled_df['Order Source'].unique().tolist()
     status = filled_df['Order Status'].unique().tolist()
@@ -183,7 +184,7 @@ with st.sidebar.form(key='filter_form'):
     selected_status = st.multiselect('Status:', status, default="Complete")
     filled_df = filled_df[filled_df['Order Status'].isin(selected_status)]
 
-    focus = st.selectbox('Focus:', options=['Sales', 'Profit', 'Orders', 'Units'])
+    focus = st.selectbox('Focus:', options=['Orders', 'Sales', 'Profit', 'Units'])
 
     # Every form must have a submit button
     st.write("#")
@@ -329,8 +330,8 @@ def map_plot(df):
         )
     )
 
-    mapfig.update_layout(height=340,width=630, title=f'{focus} by State')
-    st.plotly_chart(mapfig)
+    mapfig.update_layout(title=f'{focus} by State', height=400)
+    st.plotly_chart(mapfig, use_container_width=True)
 
 def line_chart(df,column_name):
     df_line= df.groupby([column_name], as_index=False).agg({
@@ -356,26 +357,31 @@ def line_chart(df,column_name):
     # Sort the DataFrame by 'month_name'
     df_line = df_line.sort_values('month_name')
 
-    trace1 = go.Scatter(x=df_line['month_name'], y=df_line['Sales'], mode='lines+markers+text', name='Sales', text=df_line['Sales'].apply(format_value), textposition='top center', marker_color='red')
-    trace2 = go.Scatter(x=df_line['month_name'], y=df_line['Profit'], mode='lines+markers+text', name='Profit', text=df_line['Profit'].apply(format_value), textposition='top center', marker_color='blue')
-    trace3 = go.Scatter(x=df_line['month_name'], y=df_line['Units'], mode='lines+markers+text', name='Units', text=df_line['Units'].apply(format_value), textposition='top center', marker_color='yellow')
-    trace4 = go.Scatter(x=df_line['month_name'], y=df_line['Orders'], mode='lines+markers+text', name='Orders', text=df_line['Orders'].apply(format_value), textposition='top center', marker_color='green')
+    # Create subplots with shared x-axis
+    barline_fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # Combine the traces
-    data = [trace1, trace2, trace3, trace4]
+    # Add bar traces for Sales and Profit
+    barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Sales'], name='Sales', marker_color='rgb(0, 50, 200)'), secondary_y=False)
+    barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Profit'], name='Profit', marker_color='firebrick'), secondary_y=False)
 
-    # Define the layout of the chart
-    layout = go.Layout(
+    # Add line traces for Units and Orders
+    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Units'], mode='lines+markers', name='Units', line=dict(color='yellow')), secondary_y=True)
+    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Orders'], mode='lines+markers', name='Orders', line=dict(color='green')), secondary_y=True)
+
+    max_value_df = (df_line['Units'].max())*2
+    # Update layout
+    barline_fig.update_layout(
         title='Monthly Sales, Profit, Orders, and Units',
-        #xaxis=dict(title='Month'),
-        #yaxis=dict(title='Values'),
-        hovermode='closest'
+        xaxis=dict(title='Month'),
+        yaxis=dict(title='Sales and Profit', side='left', showgrid=True),
+        yaxis2=dict(title='Units and Orders', side='right', overlaying='y', showgrid=False,  range=[0, max_value_df]),
+        hovermode='closest',
+        #barmode='stack',
+        height=400
     )
 
-    # Create the figure with data and layout
-    line_fig = go.Figure(data=data, layout=layout)
-    line_fig.update_layout(height=340,width=900)
-    st.plotly_chart(line_fig)
+    # Show the barline_figure
+    st.plotly_chart(barline_fig, use_container_width=True)
 
 def group_small_slices(df, value_column, category_column, threshold=0.05):
     # Calculate the total sum of the values
@@ -403,10 +409,10 @@ def pie_chart(df, column_name, title):
     df_pie = df[column_name].value_counts().reset_index()
     df_pie = group_small_slices(df_pie, 'count', column_name)
     pie_fig = go.Figure(data=[go.Pie(labels=df_pie[column_name], values=df_pie['count'], hole=0.5, sort=False)])
-    pie_fig.update_layout(height=340,width=520, showlegend=True, title=title)
-    st.plotly_chart(pie_fig)
+    pie_fig.update_layout(showlegend=True, title=title, height=380)
+    st.plotly_chart(pie_fig, use_container_width=True)
 
-def bar_chart(df, column_name, title):
+def bar_chart(df, column_name, title, legend):
     df_bar = df.groupby([column_name], as_index=False).agg({
         'Unit Total': 'sum',
         'Margin Per Item': 'sum',
@@ -420,51 +426,63 @@ def bar_chart(df, column_name, title):
         'Order ID': 'Orders'
     }, inplace=True)
 
-    df_bar=df_bar.sort_values(by=focus, ascending=False).head(10)
+    df_bar = df_bar.sort_values(by=focus, ascending=True).head(10)
 
-    bar_fig = px.bar(df_bar, x=column_name, y=f'{focus}',
-                 color=column_name)
-    bar_fig.update_layout(height=340,width=520, title=f"{focus} by {title}")
-    st.plotly_chart(bar_fig)
+    # Create subplots with shared x-axis
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-def group_bar_chart(df, column_name, title, legend):
-    df_bar = df.groupby([column_name], as_index=False).agg({
-        'Unit Total': 'sum',
-        'Margin Per Item': 'sum',
-        'Quantity': 'sum',
-        'Order ID': pd.Series.nunique
-    })
-    df_bar.rename(columns={
-        'Unit Total': 'Sales',
-        'Margin Per Item': 'Profit',
-        'Quantity': 'Units',
-        'Order ID': 'Orders'
-    }, inplace=True)
+    # Add bar traces for Sales and Profit
+    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Sales'], name='Sales', marker_color='firebrick'), secondary_y=False)
+    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Profit'], name='Profit', marker_color='rgb(0, 50, 200)'), secondary_y=False)
 
-    df_bar=df_bar.sort_values(by=focus, ascending=False).head(5)
+    # Add bar traces for Units and Orders (instead of line traces)
+    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Units'], name='Units', marker_color='yellow'), secondary_y=True)
+    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Orders'], name='Orders', marker_color='green'), secondary_y=True)
 
-    # Create traces for each category
-    trace1 = go.Bar(x=df_bar[column_name], y=df_bar['Sales'], name='Sales', marker_color='indianred', text=df_bar['Sales'].apply(format_value), textposition='outside')
-    trace2 = go.Bar(x=df_bar[column_name], y=df_bar['Profit'], name='Profit', marker_color='lightseagreen', text=df_bar['Profit'].apply(format_value), textposition='outside')
-    trace3 = go.Bar(x=df_bar[column_name], y=df_bar['Units'], name='Units', marker_color='royalblue', text=df_bar['Units'].apply(format_value), textposition='outside')
-    trace4 = go.Bar(x=df_bar[column_name], y=df_bar['Orders'], name='Orders', marker_color='khaki', text=df_bar['Orders'].apply(format_value), textposition='outside')
 
-    # Combine the traces
-    data = [trace1, trace2, trace3, trace4]
-
-    # Layout for the grouped bar chart
-    layout = go.Layout(
-        #xaxis=dict(title='Brand'),
-        #yaxis=dict(title='Values'),
-        barmode='group'
+    max_value_df = (df_bar['Units'].max())*6
+    # Update layout
+    fig.update_layout(
+        title=f'Top {title} by {focus}',
+        xaxis=dict(title=title),
+        yaxis=dict(title='Sales and Profit', side='left', showgrid=True),
+        yaxis2=dict(title='Units and Orders', side='right', overlaying='y', showgrid=False, range=[0, max_value_df] ),
+        hovermode='closest', barmode='stack',
     )
 
-    # Create the figure with data and layout
-    groupbar_fig = go.Figure(data=data, layout=layout)
-
     # Show the figure
-    groupbar_fig.update_layout(height=330,width=530, title=f"Top {title} by {focus}", showlegend=legend)
-    st.plotly_chart(groupbar_fig)
+    #st.plotly_chart(fig, use_container_width=True)
+
+    fig=make_subplots(
+        specs=[[{"secondary_y": True}]],vertical_spacing=0)
+
+
+    fig.update_layout(xaxis2= {'anchor': 'y', 'overlaying': 'x', 'side': 'top'},
+                      yaxis_domain=[0, 1]);
+
+    # Add bar traces for Sales and Profit
+    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick'), secondary_y=False)
+    fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)'), secondary_y=False)
+
+    # Add bar traces for Units and Orders
+    fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], name='Units', orientation='h', marker_color='yellow'), )
+    fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], name='Orders', orientation='h', marker_color='green'), )
+
+    fig.data[2].update(xaxis='x2')
+    fig.data[3].update(xaxis='x2')
+    max_value_df = (df_bar['Units'].max())*6
+    # Update layout
+    fig.update_layout(
+        title=f'Top {title} by {focus}',
+        xaxis=dict(title='Sales and Profit', showgrid=False),
+        xaxis2=dict(title='Units and Orders', side='top', overlaying='x', showgrid=False, range=[0, max_value_df] ),
+        yaxis=dict(title=title, side='left', showgrid=True),
+        yaxis2=dict(overlaying='y'),
+        hovermode='closest', barmode='stack',
+        height=500
+    )
+
+    st.plotly_chart(fig, use_container_width=True, use_container_height=True)
 
 def dashboard_1(df, df_return, filled_df, compiled_df):
     display_metrics(df, df_return, filled_df)
@@ -475,11 +493,11 @@ def dashboard_1(df, df_return, filled_df, compiled_df):
         line_chart(df, column_name='month_name')
     colC1, colC2, colC3 = st.columns(3)
     with colC1:
-        group_bar_chart(df, column_name='Manufacturer', title='Brand',legend=False)
+        bar_chart(df, column_name='Manufacturer', title='Brand',legend=False)
     with colC2:
-        group_bar_chart(df, column_name='Category', title='Category',legend=False)
+        bar_chart(df, column_name='Category', title='Category',legend=False)
     with colC3:
-        group_bar_chart(df, column_name='Model', title='Product',legend=True)
+        bar_chart(df, column_name='Model', title='Product',legend=True)
 
     colD1, colD2, colD3 = st.columns(3)
     with colD1:
@@ -521,8 +539,8 @@ def trend_chart(combined_df, column_name, title, color):
     trend_fig = go.Figure(data=data, layout=layout)
 
     # Plot the figure in Streamlit
-    trend_fig.update_layout(height=320, width=780, title=f'{title} Trend')
-    st.plotly_chart(trend_fig)
+    trend_fig.update_layout(height=340, title=f'{title} Trend')
+    st.plotly_chart(trend_fig, use_container_width=True)
 
 def totalgroup_chart(grouped_df_1, grouped_df_2):
     sum_grouped_df_1 = grouped_df_1[['Unit Total', 'Margin Per Item', 'Quantity', 'Order ID']].sum().rename('Grouped_DF_1')
@@ -532,7 +550,7 @@ def totalgroup_chart(grouped_df_1, grouped_df_2):
     plot_df = pd.DataFrame([sum_grouped_df_1, sum_grouped_df_2])
 
     # Define colors for each group, with Grouped_DF_1 being darker
-    colors_df_1 = ['darkblue', 'darkred', 'Goldenrod', 'darkgreen']
+    colors_df_1 = ['blue', 'red', 'Goldenrod', 'green']
     colors_df_2 = ['lightblue', 'lightpink', 'lightyellow', 'lightgreen']
 
     # Create the grouped bar chart with different colors and thicker bars
@@ -556,7 +574,7 @@ def totalgroup_chart(grouped_df_1, grouped_df_2):
     # Update the layout
     totalbar_fig.update_layout(barmode='group', title='Total Sales, Profit, Units and Orders',
                       #yaxis_title='Period Total',
-                      legend_title_text='Legend', showlegend=False, height=400)
+                      legend_title_text='Legend', showlegend=True, height=400)
     st.plotly_chart(totalbar_fig, use_container_width=True)
 
 
@@ -682,12 +700,12 @@ def create_app(filled_df):
                 totalgroup_chart(grouped_df_1, grouped_df_2)
             colA1, colA2 = st.columns(2)
             with colA1:
-                trend_chart(combined_df, column_name='Unit Total', title='Sales', color=['darkblue','lightblue'])
+                trend_chart(combined_df, column_name='Unit Total', title='Sales', color=['blue','lightblue'])
             with colA2:
-                trend_chart(combined_df, column_name='Margin Per Item', title='Profit', color=['darkred','lightpink'])
+                trend_chart(combined_df, column_name='Margin Per Item', title='Profit', color=['red','lightpink'])
             colB1, colB2 = st.columns(2)
             with colB1:
-                trend_chart(combined_df, column_name='Quantity', title='Orders', color=['darkgreen','lightgreen'])
+                trend_chart(combined_df, column_name='Quantity', title='Orders', color=['green','lightgreen'])
             with colB2:
                 trend_chart(combined_df, column_name='Order ID', title='Units', color=['Goldenrod','lightyellow'])
 
