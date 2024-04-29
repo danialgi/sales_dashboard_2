@@ -365,8 +365,8 @@ def line_chart(df,column_name):
     barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Profit'], name='Profit', marker_color='firebrick', text=df_line['Profit'].apply(format_value), textposition='auto'), secondary_y=False)
 
     # Add line traces for Units and Orders
-    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Units'], mode='lines+markers+text', name='Units', line=dict(color='yellow'), text=df_line['Units'].apply(format_value), textposition='top center')), secondary_y=True)
-    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Orders'], mode='lines+markers+text', name='Orders', line=dict(color='green', text=df_line['Orders'].apply(format_value), textposition='top center')), secondary_y=True)
+    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Units'], mode='lines+markers+text', name='Units', line=dict(color='yellow'), text=df_line['Units'].apply(format_value), textposition='top center'), secondary_y=True)
+    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Orders'], mode='lines+markers+text', name='Orders', line=dict(color='green'), text=df_line['Orders'].apply(format_value), textposition='top center'), secondary_y=True)
 
     max_value_df = (df_line['Units'].max())*2
     # Update layout
