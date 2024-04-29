@@ -470,7 +470,7 @@ def bar_chart(df, column_name, title, legend):
 
     fig.data[2].update(xaxis='x2')
     fig.data[3].update(xaxis='x2')
-    max_value_df1 = (df_bar['Sales'].max())
+    max_value_df1 = (df_bar['Sales'].max())*1.5
     max_value_df2 = (df_bar['Units'].max())*6
     # Update layout
     fig.update_layout(
