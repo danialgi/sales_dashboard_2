@@ -476,7 +476,7 @@ def bar_chart(df, column_name, title, legend):
     fig.update_layout(
         title=f'Top {title} by {focus}',
         xaxis=dict(title='Sales and Profit', showgrid=False, range=[0, max_value_df1] ),
-        xaxis2=dict(title='Units and Orders', side='top', overlaying='x', showgrid=False, range=[0, max_value_d2] ),
+        xaxis2=dict(title='Units and Orders', side='top', overlaying='x', showgrid=False, range=[0, max_value_df2] ),
         yaxis=dict(title=title, side='left', showgrid=True),
         yaxis2=dict(overlaying='y'),
         hovermode='closest', barmode='stack',
