@@ -184,7 +184,7 @@ with st.sidebar.form(key='filter_form'):
     selected_status = st.multiselect('Status:', status, default="Complete")
     filled_df = filled_df[filled_df['Order Status'].isin(selected_status)]
 
-    focus = st.selectbox('Focus:', options=['Orders', 'Units', 'Sales', 'Profit'])
+    focus = st.selectbox('Focus:', options=['Sales', 'Profit', 'Orders', 'Units'])
 
     # Every form must have a submit button
     st.write("#")
@@ -470,12 +470,13 @@ def bar_chart(df, column_name, title, legend):
 
     fig.data[2].update(xaxis='x2')
     fig.data[3].update(xaxis='x2')
-    max_value_df = (df_bar['Units'].max())*6
+    max_value_df1 = (df_bar['Sales'].max())
+    max_value_df2 = (df_bar['Units'].max())*6
     # Update layout
     fig.update_layout(
         title=f'Top {title} by {focus}',
-        xaxis=dict(title='Sales and Profit', showgrid=False),
-        xaxis2=dict(title='Units and Orders', side='top', overlaying='x', showgrid=False, range=[0, max_value_df] ),
+        xaxis=dict(title='Sales and Profit', showgrid=False, range=[0, max_value_df1] ),
+        xaxis2=dict(title='Units and Orders', side='top', overlaying='x', showgrid=False, range=[0, max_value_d2] ),
         yaxis=dict(title=title, side='left', showgrid=True),
         yaxis2=dict(overlaying='y'),
         hovermode='closest', barmode='stack',
