@@ -426,7 +426,7 @@ def bar_chart(df, column_name, title, legend):
         'Order ID': 'Orders'
     }, inplace=True)
 
-    df_bar = df_bar.sort_values(by=focus, ascending=True).head(10)
+    df_bar = df_bar.sort_values(by=focus, ascending=True).tail(10)
 
     # Create subplots with shared x-axis
     fig = make_subplots(specs=[[{"secondary_y": True}]])
