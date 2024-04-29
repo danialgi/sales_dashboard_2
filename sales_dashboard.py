@@ -461,7 +461,7 @@ def bar_chart(df, column_name, title, legend):
                       yaxis_domain=[0, 1]);
 
     # Add bar traces for Sales and Profit
-    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick'), secondary_y=False)
+    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', text=df_line['Sales'].apply(format_value), textposition='auto'), secondary_y=False)
     fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)'), secondary_y=False)
 
     # Add bar traces for Units and Orders
