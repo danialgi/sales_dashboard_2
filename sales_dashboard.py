@@ -541,7 +541,7 @@ def trend_chart(combined_df, column_name, title, color):
     trend_fig = go.Figure(data=data, layout=layout)
 
     # Plot the figure in Streamlit
-    trend_fig.update_layout(height=340, title=f'{title} Trend')
+    trend_fig.update_layout(height=340, title=f'{title} Trend', hovermode='x')
     st.plotly_chart(trend_fig, use_container_width=True)
 
 def totalgroup_chart(grouped_df_1, grouped_df_2):
