@@ -17,6 +17,8 @@ today_date = datetime.now().strftime('%Y-%m-%d')
 
 st.set_page_config(page_title="Sales Dashboard", page_icon="📈", layout="wide")
 
+folder_path = 'Sales Dashboard'
+
 @st.cache_data
 def process_data_sheets(folder_path):
     # Helper function to process individual sheets
@@ -56,8 +58,6 @@ def process_data_sheets(folder_path):
 
     return compiled_data
 
-# Usage
-folder_path = 'Sales Dashboard'  # Replace with the path to your folder containing Excel files
 compiled_df = process_data_sheets(folder_path)
 compiled_df.reset_index(drop=True, inplace=True)
 #compiled_df
@@ -101,9 +101,9 @@ def format_value(value):
     abs_value = abs(value)
 
     if abs_value >= 1000000:
-        formatted_value = f"{abs_value/1000000:.1f}M"
+        formatted_value = f"{abs_value/1000000:.2f}M"
     elif abs_value >= 1000:
-        formatted_value = f"{abs_value/1000:.1f}K"
+        formatted_value = f"{abs_value/1000:.2f}K"
     else:
         formatted_value = str(abs_value)
 
@@ -457,14 +457,47 @@ def bar_chart(df, column_name, title, legend):
     fig.update_layout(xaxis2= {'anchor': 'y', 'overlaying': 'x', 'side': 'top'},
                       yaxis_domain=[0, 1]);
 
-    # Add bar traces for Sales and Profit
-    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1, hovertemplate =
-    '%{text}', text = df_bar['Sales'].apply(format_value), textposition='none'), secondary_y=False)
-    fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=df_bar['Sales'], hovertemplate =
-    '%{text}', text = df_bar['Profit'].apply(format_value), textposition='none'), secondary_y=False)
-    # Add bar traces for Units and Orders
-    fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3,base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2), hovertemplate='%{text}', text = df_bar['Orders'], textposition='none'))
-    fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2)+df_bar['Orders'], hovertemplate='%{text}', text = df_bar['Units'], textposition='none'))
+    if focus == 'Sales':
+        # Add bar traces for Sales and Profit
+        fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1, hovertemplate =
+        '%{text}', text = df_bar['Sales'].apply(format_value), textposition='none'), secondary_y=False)
+        fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=df_bar['Sales'], hovertemplate =
+        '%{text}', text = df_bar['Profit'].apply(format_value), textposition='none'), secondary_y=False)
+        # Add bar traces for Units and Orders
+        fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3,base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2), hovertemplate='%{text}', text = df_bar['Orders'], textposition='none'))
+        fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2)+df_bar['Orders'], hovertemplate='%{text}', text = df_bar['Units'], textposition='none'))
+
+    if focus == 'Profit':
+        # Add bar traces for Sales and Profit
+        fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, hovertemplate =
+        '%{text}', text = df_bar['Profit'].apply(format_value), textposition='none'), secondary_y=False)
+        fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1, base=df_bar['Profit'], hovertemplate =
+        '%{text}', text = df_bar['Sales'].apply(format_value), textposition='none'), secondary_y=False)
+
+        # Add bar traces for Units and Orders
+        fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2), hovertemplate='%{text}', text = df_bar['Orders'], textposition='none'))
+        fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2)+df_bar['Orders'], hovertemplate='%{text}', text = df_bar['Units'], textposition='none'))
+
+    if focus == 'Orders':
+        # Add bar traces for Units and Orders
+        fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3, hovertemplate='%{text}', text = df_bar['Orders'], textposition='none'))
+        fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=df_bar['Orders'], hovertemplate='%{text}', text = df_bar['Units'], textposition='none'))
+        # Add bar traces for Sales and Profit
+        fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1, base=((df_bar['Orders']+df_bar['Units'])/max_value_df2*max_value_df1), hovertemplate =
+        '%{text}', text = df_bar['Sales'].apply(format_value), textposition='none'), secondary_y=False)
+        fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=((df_bar['Orders']+df_bar['Units'])/max_value_df2*max_value_df1)+df_bar['Sales'], hovertemplate =
+        '%{text}', text = df_bar['Profit'].apply(format_value), textposition='none'), secondary_y=False)
+
+    if focus == 'Units':
+        # Add bar traces for Units and Orders
+        fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, hovertemplate='%{text}', text = df_bar['Units'], textposition='none'))
+        fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3, base=df_bar['Units'], hovertemplate='%{text}', text = df_bar['Orders'], textposition='none'))
+        # Add bar traces for Sales and Profit
+        fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1, base=((df_bar['Orders']+df_bar['Units'])/max_value_df2*max_value_df1), hovertemplate =
+        '%{text}', text = df_bar['Sales'].apply(format_value), textposition='none'), secondary_y=False)
+        fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=((df_bar['Orders']+df_bar['Units'])/max_value_df2*max_value_df1)+df_bar['Sales'], hovertemplate =
+        '%{text}', text = df_bar['Profit'].apply(format_value), textposition='none'), secondary_y=False)
+
 
     # Update layout
     fig.update_layout(
