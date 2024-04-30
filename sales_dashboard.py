@@ -360,24 +360,30 @@ def line_chart(df,column_name):
     # Create subplots with shared x-axis
     barline_fig = make_subplots(specs=[[{"secondary_y": True}]])
 
+    # Add line traces for Units and Orders
+    #barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Sales'], mode='lines+markers', name='Sales', line=dict(color='red'), text=df_line['Sales'].apply(format_value), textposition='top center'), secondary_y=False)
+    #barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Profit'], mode='lines+markers', name='Profit', line=dict(color='blue'), text=df_line['Profit'].apply(format_value), textposition='top center'), secondary_y=False)
     # Add bar traces for Sales and Profit
-    barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Sales'], name='Sales', marker_color='rgb(0, 50, 200)', text=df_line['Sales'].apply(format_value), textposition='auto'), secondary_y=False)
-    barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Profit'], name='Profit', marker_color='firebrick', text=df_line['Profit'].apply(format_value), textposition='auto'), secondary_y=False)
+    barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Sales'], name='Sales', marker_color='rgb(150,0,0)', text=df_line['Sales'].apply(format_value), textposition='inside', textfont=dict()), secondary_y=False)
+    barline_fig.add_trace(go.Bar(x=df_line['month_name'], y=df_line['Profit'], name='Profit', marker_color='rgb(0,50,200)', text=df_line['Profit'].apply(format_value), textposition='inside', textfont=dict()), secondary_y=False)
 
     # Add line traces for Units and Orders
-    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Units'], mode='lines+markers+text', name='Units', line=dict(color='yellow'), text=df_line['Units'].apply(format_value), textposition='top center'), secondary_y=True)
     barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Orders'], mode='lines+markers+text', name='Orders', line=dict(color='green'), text=df_line['Orders'].apply(format_value), textposition='top center'), secondary_y=True)
+    barline_fig.add_trace(go.Scatter(x=df_line['month_name'], y=df_line['Units'], mode='lines+markers+text', name='Units', line=dict(color='yellow'), text=df_line['Units'].apply(format_value), textposition='top center'), secondary_y=True)
 
-    max_value_df = (df_line['Units'].max())*2
+    max_value_df1 = (df_line['Sales'].max())*2.0
+    max_value_df2 = (df_line['Units'].max())*1.1
     # Update layout
     barline_fig.update_layout(
         title='Monthly Sales, Profit, Orders, and Units',
         xaxis=dict(title='Month'),
-        yaxis=dict(title='Sales and Profit', side='left', showgrid=True),
-        yaxis2=dict(title='Units and Orders', side='right', overlaying='y', showgrid=False,  range=[0, max_value_df]),
+        yaxis=dict(title='Sales and Profit', side='left', showgrid=True,  range=[0, max_value_df1]),
+        yaxis2=dict(title='Units and Orders', side='right', overlaying='y', showgrid=False,  range=[0, max_value_df2]),
         hovermode='closest',
-        #barmode='stack',
-        height=400
+        barmode='stack',
+        height=400,
+        bargap=0.5,
+        legend=dict(traceorder="normal")
     )
 
     # Show the barline_figure
@@ -408,7 +414,18 @@ def group_small_slices(df, value_column, category_column, threshold=0.05):
 def pie_chart(df, column_name, title):
     df_pie = df[column_name].value_counts().reset_index()
     df_pie = group_small_slices(df_pie, 'count', column_name)
-    pie_fig = go.Figure(data=[go.Pie(labels=df_pie[column_name], values=df_pie['count'], hole=0.5, sort=False)])
+
+    # Create the pie chart
+    pie_fig = go.Figure(data=[go.Pie(
+        labels=df_pie[column_name],
+        values=df_pie['count'],
+        hole=0.5,
+        sort=False,
+        textinfo='value+percent',  # Show percentage inside the slice only
+        #insidetextorientation='auto',  # Place labels inside the slices
+        #outsidetextfont={'size': 12}  # Customize font for labels outside the pie
+    )])
+
     pie_fig.update_layout(showlegend=True, title=title, height=380)
     st.plotly_chart(pie_fig, use_container_width=True)
 
@@ -427,31 +444,11 @@ def bar_chart(df, column_name, title, legend):
     }, inplace=True)
 
     df_bar = df_bar.sort_values(by=focus, ascending=True).tail(10)
+    rows_to_remove = df_bar[df_bar[column_name] == '-'].index
+    df_bar.drop(rows_to_remove, inplace=True)
 
-    # Create subplots with shared x-axis
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    # Add bar traces for Sales and Profit
-    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Sales'], name='Sales', marker_color='firebrick'), secondary_y=False)
-    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Profit'], name='Profit', marker_color='rgb(0, 50, 200)'), secondary_y=False)
-
-    # Add bar traces for Units and Orders (instead of line traces)
-    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Units'], name='Units', marker_color='yellow'), secondary_y=True)
-    fig.add_trace(go.Bar(x=df_bar[column_name], y=df_bar['Orders'], name='Orders', marker_color='green'), secondary_y=True)
-
-
-    max_value_df = (df_bar['Units'].max())*6
-    # Update layout
-    fig.update_layout(
-        title=f'Top {title} by {focus}',
-        xaxis=dict(title=title),
-        yaxis=dict(title='Sales and Profit', side='left', showgrid=True),
-        yaxis2=dict(title='Units and Orders', side='right', overlaying='y', showgrid=False, range=[0, max_value_df] ),
-        hovermode='closest', barmode='stack',
-    )
-
-    # Show the figure
-    #st.plotly_chart(fig, use_container_width=True)
+    max_value_df1 = (df_bar['Sales'].max())*2
+    max_value_df2 = (df_bar['Units'].max())*5
 
     fig=make_subplots(
         specs=[[{"secondary_y": True}]],vertical_spacing=0)
@@ -460,30 +457,34 @@ def bar_chart(df, column_name, title, legend):
     fig.update_layout(xaxis2= {'anchor': 'y', 'overlaying': 'x', 'side': 'top'},
                       yaxis_domain=[0, 1]);
 
-   # Add bar traces for Sales and Profit
-    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick'), secondary_y=False)
-    fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)'), secondary_y=False)
-
+    # Add bar traces for Sales and Profit
+    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1), secondary_y=False)
+    fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=df_bar['Sales']))  # Set base to Sales
     # Add bar traces for Units and Orders
-    fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], name='Units', orientation='h', marker_color='yellow'), )
-    fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], name='Orders', orientation='h', marker_color='green'), )
+    fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3,base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2) ))  # Set base to Profit
+    fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2)+df_bar['Orders']))
 
-    fig.data[2].update(xaxis='x2')
-    fig.data[3].update(xaxis='x2')
-    max_value_df1 = (df_bar['Sales'].max())*1.5
-    max_value_df2 = (df_bar['Units'].max())*6
+
     # Update layout
     fig.update_layout(
         title=f'Top {title} by {focus}',
-        xaxis=dict(title='Sales and Profit', showgrid=False, range=[0, max_value_df1] ),
-        xaxis2=dict(title='Units and Orders', side='top', overlaying='x', showgrid=False, range=[0, max_value_df2] ),
-        yaxis=dict(title=title, side='left', showgrid=True),
+        xaxis=dict( showgrid=False, range=[0, max_value_df1]  ),
+        xaxis2=dict( side='top', overlaying='x', showgrid=False,  range=[0, max_value_df2] ),
+        yaxis=dict(side='left', showgrid=True),
         yaxis2=dict(overlaying='y'),
-        hovermode='closest', barmode='stack',
-        height=500
+        hovermode=False,
+        barmode='overlay',
+        height=500,
+        legend=dict(traceorder="normal")
     )
-
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     st.plotly_chart(fig, use_container_width=True, use_container_height=True)
+
+    show_df=st.toggle(f"{title} DataFrame", value=False)
+    if show_df:
+        st.write(df_bar.sort_values(by=focus, ascending=False).reset_index(drop=True))
+
 
 def dashboard_1(df, df_return, filled_df, compiled_df):
     display_metrics(df, df_return, filled_df)
@@ -544,15 +545,28 @@ def trend_chart(combined_df, column_name, title, color):
     st.plotly_chart(trend_fig, use_container_width=True)
 
 def totalgroup_chart(grouped_df_1, grouped_df_2):
-    sum_grouped_df_1 = grouped_df_1[['Unit Total', 'Margin Per Item', 'Quantity', 'Order ID']].sum().rename('Grouped_DF_1')
-    sum_grouped_df_2 = grouped_df_2[['Unit Total', 'Margin Per Item', 'Quantity', 'Order ID']].sum().rename('Grouped_DF_2')
+    sum_grouped_df_1 = grouped_df_1[['Unit Total', 'Margin Per Item', 'Order ID', 'Quantity']].sum().rename('Grouped_DF_1')
+    sum_grouped_df_2 = grouped_df_2[['Unit Total', 'Margin Per Item', 'Order ID', 'Quantity']].sum().rename('Grouped_DF_2')
+
+    sum_grouped_df_1.rename(index={
+        'Unit Total': 'Sales',
+        'Margin Per Item': 'Profit',
+        'Quantity': 'Units',
+        'Order ID': 'Orders'
+    }, inplace=True)
+    sum_grouped_df_2.rename(index={
+        'Unit Total': 'Sales',
+        'Margin Per Item': 'Profit',
+        'Quantity': 'Units',
+        'Order ID': 'Orders'
+    }, inplace=True)
 
     # Create a new dataframe for plotting
     plot_df = pd.DataFrame([sum_grouped_df_1, sum_grouped_df_2])
 
     # Define colors for each group, with Grouped_DF_1 being darker
-    colors_df_1 = ['blue', 'red', 'Goldenrod', 'green']
-    colors_df_2 = ['lightblue', 'lightpink', 'lightyellow', 'lightgreen']
+    colors_df_1 = ['purple']
+    colors_df_2 = ['orange']
 
     # Create the grouped bar chart with different colors and thicker bars
     totalbar_fig = go.Figure()
@@ -560,22 +574,30 @@ def totalgroup_chart(grouped_df_1, grouped_df_2):
     # Define the bar width
     bar_width = 0.4
 
-    # Add bars for Grouped_DF_1 with darker colors
     for i, col in enumerate(plot_df.columns):
-        totalbar_fig.add_trace(go.Bar(name=f'Period 1 {col}',
-                             x=[col.replace('Unit Total', 'Sales').replace('Margin Per Item', 'Profit').replace('Quantity', 'Units').replace('Order ID', 'Orders')], y=[plot_df[col][0]],
-                             marker_color=colors_df_1[i], width=bar_width, text=format_value(plot_df[col][0]), textposition='auto'))
+        show_legend = True if i == 0 else False  # Show legend only for the first bar
+        totalbar_fig.add_trace(go.Bar(name=f'Period 1 ',
+                             x=[col], y=[plot_df[col][0]],
+                             marker_color=colors_df_1,
+                              width=bar_width, text=format_value(plot_df[col][0]), textposition='auto',
+                              showlegend=show_legend)) # Set showlegend attribute
 
     # Add bars for Grouped_DF_2 with lighter colors
     for i, col in enumerate(plot_df.columns):
-        totalbar_fig.add_trace(go.Bar(name=f'Period 2 {col}',
-                             x=[col.replace('Unit Total', 'Sales').replace('Margin Per Item', 'Profit').replace('Quantity', 'Units').replace('Order ID', 'Orders')], y=[plot_df[col][1]],
-                             marker_color=colors_df_2[i], width=bar_width, text=format_value(plot_df[col][1]), textposition='auto'))
+        show_legend = True if i == 0 else False  # Show legend only for the first bar
+        totalbar_fig.add_trace(go.Bar(name=f'Period 2 ',
+                             x=[col], y=[plot_df[col][1]],
+                            marker_color=colors_df_2,
+                              width=bar_width, text=format_value(plot_df[col][1]), textposition='auto',
+                              showlegend=show_legend))  # Set showlegend attribute
 
     # Update the layout
     totalbar_fig.update_layout(barmode='group', title='Total Sales, Profit, Units and Orders',
-                      #yaxis_title='Period Total',
-                      legend_title_text='Legend', showlegend=True, height=400)
+                      #xaxis_title='Category',
+                      xaxis=dict(
+                      tickfont=dict(size=15)),
+                      #legend_title_text='Legend',
+                       showlegend=True, height=400)
     st.plotly_chart(totalbar_fig, use_container_width=True)
 
 
