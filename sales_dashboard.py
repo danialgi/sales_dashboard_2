@@ -443,9 +443,9 @@ def bar_chart(df, column_name, title, legend):
         'Order ID': 'Orders'
     }, inplace=True)
 
-    df_bar = df_bar.sort_values(by=focus, ascending=True).tail(10)
     rows_to_remove = df_bar[df_bar[column_name] == '-'].index
     df_bar.drop(rows_to_remove, inplace=True)
+    df_bar = df_bar.sort_values(by=focus, ascending=True).tail(10)
 
     max_value_df1 = (df_bar['Sales'].max())*2
     max_value_df2 = (df_bar['Units'].max())*5
@@ -458,12 +458,13 @@ def bar_chart(df, column_name, title, legend):
                       yaxis_domain=[0, 1]);
 
     # Add bar traces for Sales and Profit
-    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1), secondary_y=False)
-    fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=df_bar['Sales']))  # Set base to Sales
+    fig.add_trace(go.Bar(x=df_bar['Sales'], y=df_bar[column_name], name='Sales', orientation='h', marker_color='firebrick', legendrank=1, hovertemplate =
+    '%{text}', text = df_bar['Sales'].apply(format_value), textposition='none'), secondary_y=False)
+    fig.add_trace(go.Bar(x=df_bar['Profit'], y=df_bar[column_name], name='Profit', orientation='h', marker_color='rgb(0, 50, 200)', legendrank=2, base=df_bar['Sales'], hovertemplate =
+    '%{text}', text = df_bar['Profit'].apply(format_value), textposition='none'), secondary_y=False)
     # Add bar traces for Units and Orders
-    fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3,base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2) ))  # Set base to Profit
-    fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2)+df_bar['Orders']))
-
+    fig.add_trace(go.Bar(x=df_bar['Orders'], y=df_bar[column_name], xaxis='x2', name='Orders', orientation='h', marker_color='green', legendrank=3,base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2), hovertemplate='%{text}', text = df_bar['Orders'], textposition='none'))
+    fig.add_trace(go.Bar(x=df_bar['Units'], y=df_bar[column_name], xaxis='x2', name='Units', orientation='h', marker_color='yellow', legendrank=4, base=((df_bar['Profit']+df_bar['Sales'])/max_value_df1*max_value_df2)+df_bar['Orders'], hovertemplate='%{text}', text = df_bar['Units'], textposition='none'))
 
     # Update layout
     fig.update_layout(
@@ -472,7 +473,7 @@ def bar_chart(df, column_name, title, legend):
         xaxis2=dict( side='top', overlaying='x', showgrid=False,  range=[0, max_value_df2] ),
         yaxis=dict(side='left', showgrid=True),
         yaxis2=dict(overlaying='y'),
-        hovermode=False,
+        #hovermode=False,
         barmode='overlay',
         height=500,
         legend=dict(traceorder="normal")
