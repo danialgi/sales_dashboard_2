@@ -184,7 +184,8 @@ with st.sidebar.form(key='filter_form'):
     selected_status = st.multiselect('Status:', status, default="Complete")
     filled_df = filled_df[filled_df['Order Status'].isin(selected_status)]
 
-    focus = st.selectbox('Focus:', options=['Sales', 'Profit', 'Orders', 'Units'])
+    if mode != 'Compare':
+        focus = st.selectbox('Focus:', options=['Sales', 'Profit', 'Orders', 'Units'])
 
     # Every form must have a submit button
     st.write("#")
